@@ -17,7 +17,6 @@ def setup_and_align_data(data_loader, alignment='all'):
         (aligned_imaging, trial_info, celltypes)
     """
     # Load data
-    # pupil_data = data_loader.load_pupil_data()
     neural_data, good_trials, trial_info, movement_in_imaging, frame_id_events, file_num, velocity_data, imaging = data_loader.load_neural_data(neural_data_type='dff')
     
     # Align frames

@@ -1,22 +1,13 @@
 import pandas as pd
 import scipy.io as sio
 import numpy as np
-import os
 
 class DataLoader:
-    def __init__(self, matlab_file,  pupil_csv=None, latent_states_file=None, server=None, animalID=None, date=None):
-        self.pupil_csv = pupil_csv
+    def __init__(self, matlab_file, server=None, animalID=None, date=None):
         self.matlab_file = matlab_file
-        self.latent_states_file = latent_states_file
         self.server = server
         self.animalID = animalID
         self.date = date
-
-    def load_pupil_data(self):
-        """Loads pupil data from a CSV file into a pandas DataFrame."""
-        print(self.pupil_csv)
-        pupil_df = pd.read_csv(self.pupil_csv)
-        return pupil_df
     
     # Normalize trial_info and movement_in_imaging to remove unnecessary indexing
     def normalize_data(self, data):
@@ -197,92 +188,3 @@ class DataLoader:
 
         return global_frame_ids
     
-    def load_latent_states(self):
-        """Loads latent behavioral states for each trial."""
-        # Load the complete latent states data once
-        latent_states_full = pd.read_csv(self.latent_states_file)  # Assuming CSV for simplicity
-        
-        # Convert date from YYYY-MM-DD to YYMMDD format
-        formatted_date = pd.to_datetime(self.date).strftime('%y%m%d')
-
-        latent_states_full['mouseID'] = latent_states_full['mouseID'].astype(str).str.strip()
-        latent_states_full['Date'] = latent_states_full['Date'].astype(str).str.strip()
-        
-        # Filter the latent states based on animalID and formatted_date
-        # if dataset is not found, return empty dataframe
-        if not ((latent_states_full['mouseID'] == self.animalID) &
-                (latent_states_full['Date'] == formatted_date)).any():
-            print(f"Warning: No latent states found for animalID {self.animalID} on date {formatted_date}.")
-            return pd.DataFrame()
-        else:
-            latent_states_dataset = latent_states_full[(latent_states_full['mouseID'] == self.animalID) & 
-                                                   (latent_states_full['Date'] == formatted_date)]
-        return latent_states_dataset
-
-    
-    #LOAD INFO STRUCTURE
-    def load_info(self,directory):
-        """
-        Load mouse dates and associated keys from the specified directory.
-
-        Parameters:
-            directory (str): The directory containing the info.mat file.
-
-        Returns:
-            list: A list of tuples containing (animalID, date, server).
-            list: A list of mouse date keys.
-        """
-        load_dir = directory #'V:/Connie/results/active/mod' #
-
-        # Load the condition_array_trials structure
-        mat_data = sio.loadmat(os.path.join(load_dir,'info.mat'))
-        info = mat_data['info'][0][0]
-
-        # Assuming your mouse_date structure is loaded as a numpy array
-        mouse_dates_keys = [
-            item[0].replace('\\', '_').replace('/', '_')  # Replace slashes with underscores for consistency
-            for item in info['mouse_date'][0]
-        ]
-
-        mouse_dates = []
-        for item,server in zip(info['mouse_date'][0],info['serverid'][0]):
-            current_item = item[0].replace('\\', '_').replace('/', '_')  # Replace both slashes with underscores
-            
-            parts = current_item.split('_')  # Split the modified string by underscore
-            
-            # Assuming animalID is the first part and date is the last part
-            animalID = parts[0]  # Assuming animal ID is the first part
-            date = parts[-1]  # Assuming date is the last part
-
-            # Append as a tuple in the format (animalID, date, server)
-            mouse_dates.append((animalID, date, server[0]))
-
-        return mouse_dates, mouse_dates_keys
-    
-    #LOAD INFO STRUCTURE
-    def load_engagement_proj(self):
-        """
-        Load engagement project data, including projection structure, test trials, 
-        and selected engagement frames from predefined files.
-
-        Returns:
-            engagement_proj (list): List or array of engagement projection data 
-                loaded from 'engagement_proj_all.mat'.
-            test_trials (list): List or array of test trial data 
-                loaded from 'test_trials_all.mat' in MATLAB indexing.
-            engagement_frames (list): List or array of selected frame indices 
-                loaded from 'selected_frames.mat' in MATLAB indexing.
-        """
-
-        directory = 'W:/Connie/Analysis/engagement/'
-        # Load the engagement_proj structure
-        engagement_proj_data = sio.loadmat(os.path.join(directory,'engagement_proj_all.mat'))
-        engagement_proj = engagement_proj_data['engagement_proj_all'][0] 
-
-        test_trials_data = sio.loadmat(os.path.join(directory,'test_trials_all.mat'))
-        test_trials = test_trials_data['test_trials_all'][0]
-
-        engagement_frames_data = sio.loadmat(os.path.join(directory,'selected_frames.mat')) #shape is trials x frames
-        engagement_frames = engagement_frames_data['selected_frames'][0]
-
-        return engagement_proj, test_trials, engagement_frames
