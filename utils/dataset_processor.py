@@ -36,7 +36,7 @@ class DatasetProcessor:
         
         for data_loader, (key, info) in zip(data_loaders, celltype_info.items()):
             animalID, date = key
-            celltypes = celltype_info[animalID, date]['neuron_groups']
+            celltypes = info['neuron_groups'] if info else None
             
             # Align data
             aligned_imaging, trial_info, good_trials = setup_and_align_data(

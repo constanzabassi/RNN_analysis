@@ -45,30 +45,24 @@ class DataPipeline:
         return celltype_array, neuron_groups, colors
 
 
-    def load_data(self, datasets, save_string = 'VR',load_celltypes=True):
+    def load_data(self, datasets, save_string='VR', load_celltypes=True):
         data_loaders = []
         celltype_info = {}
-        engagement_dict = {}
-        test_trials_dict = {}
-        engagement_frames_dict = {}
 
         # Iterate through each dataset to load data
         for animalID, date, server in datasets:
             print(f"Loading data for: Animal: {animalID}, Date: {date}, Server: {server}")
 
             # Initialize DataLoader with the proper arguments
-            pupil_csv = f"W:/Connie/Analysis/{animalID}-{date}/{animalID}-{date}final_fit.csv"
             matlab_file = f"{server}/Connie/ProcessedData/{animalID}/{date}/{save_string}/imaging.mat"
-            latent_states_file = "W:\Connie\Analysis\glm_hmm_data.csv" #f"{server}/Connie/ProcessedData/{animalID}/{date}/latent_states.mat"
-
-            data_loader = DataLoader(matlab_file, pupil_csv, latent_states_file,server=server,animalID=animalID,date=date)
+            data_loader = DataLoader(matlab_file, server=server, animalID=animalID, date=date)
 
             # Store the data loader and celltype info for further analysis
             data_loaders.append(data_loader)
+            key = (animalID, date)
             # Optionally load the cell types
             if load_celltypes:
-                celltype_array, neuron_groups, colors = self.load_celltypes( animalID, date, server)
-                key = (animalID,date)
+                celltype_array, neuron_groups, colors = self.load_celltypes(animalID, date, server)
                 celltype_info[key] = {
                     'celltype_array': celltype_array,
                     'neuron_groups': neuron_groups,
@@ -76,24 +70,8 @@ class DataPipeline:
                 }
             else:
                 celltype_info[key] = None
-
-        # load engagement projections (and trials to get those projections)
-        engagement_proj, test_trials, engagement_frames = data_loader.load_engagement_proj()
-        mouse_dates, mouse_dates_keys = data_loader.load_info('V:/Connie/results/opto_sound_2025/context/data_info')
-
-        # Build a mapping from mouse_dates to their index in engagement_proj/test_trials
-        mouse_dates_index = {tuple(mouse_dates[i]): i for i in range(len(mouse_dates))}
-        for animalID, date, server in datasets:
-            #load engagement projections and test trials for this dataset (making sure the keys match from info vs dataset)
-            key = (animalID, date, server) 
-            keynoserver = (animalID, date)
-            idx = mouse_dates_index.get(key)
-            if idx is not None:
-                engagement_dict[keynoserver] = engagement_proj[idx][0]
-                test_trials_dict[keynoserver] = test_trials[idx][0] -1 #convert to python indexing
-                engagement_frames_dict[keynoserver] = engagement_frames[idx] -1 #convert to python indexing
         
-        return data_loaders, celltype_info, engagement_dict, test_trials_dict, engagement_frames_dict
+        return data_loaders, celltype_info
 
 
     def load_neural_data(self, datasets,save_string = 'VR', load_celltypes=True):
