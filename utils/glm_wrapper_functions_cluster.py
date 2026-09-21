@@ -119,7 +119,7 @@ class glm_wrapper_functions_cluster:
             # only for active trials
             correct_test = self.get_correct_from_behav(
                 behav['behav_big_matrix'].T,   # IMPORTANT: same time axis as X
-                trial_starts
+                trial_starts_test
             )
         else:
             correct_test = None
