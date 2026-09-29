@@ -39,6 +39,17 @@ class glm_wrapper_functions_cluster:
         if raw_deconvolved == 0:
             Y_train[Y_train > 0.05] = 1
 
+        #load conditions
+        condition_path = os.path.join(
+            directory_train,
+            "condition_array_trials.mat"
+        )
+
+        condition_data = scipy.io.loadmat(condition_path)
+        condition_array_trials = condition_data["condition_array_trials"]
+
+        correct_train = condition_array_trials[:, 1].astype(int)
+
         # Frame indices for trial segmentation
         frames = scipy.io.loadmat('combined_frames_included.mat')
         frames = frames['combined_frames_included'][0]
@@ -63,10 +74,11 @@ class glm_wrapper_functions_cluster:
         # NEW: extract correct / incorrect labels
         if ctx_value == 1:
             # only for active trials
-            correct_train = self.get_correct_from_behav(
-                behav['behav_big_matrix'].T,   # IMPORTANT: same time axis as X
-                trial_starts
-            )
+            correct_train = correct_train
+            # correct_train = self.get_correct_from_behav(
+            #     behav['behav_big_matrix'].T,   # IMPORTANT: same time axis as X
+            #     trial_starts
+            # )
         else:
             correct_train = None
             print(correct_train)
@@ -100,6 +112,16 @@ class glm_wrapper_functions_cluster:
         if raw_deconvolved == 0:
             Y_test[Y_test > 0.05] = 1
 
+        condition_path = os.path.join(
+            directory_test,
+            "condition_array_trials.mat"
+        )
+
+        condition_data = scipy.io.loadmat(condition_path)
+        condition_array_trials = condition_data["condition_array_trials"]
+
+        correct_test = condition_array_trials[:, 1].astype(int)
+
         frames = scipy.io.loadmat('combined_frames_included.mat')
         frames = frames['combined_frames_included'][0]
 
@@ -117,10 +139,7 @@ class glm_wrapper_functions_cluster:
 
         if ctx_value == 1:
             # only for active trials
-            correct_test = self.get_correct_from_behav(
-                behav['behav_big_matrix'].T,   # IMPORTANT: same time axis as X
-                trial_starts_test
-            )
+            correct_test = correct_test
         else:
             correct_test = None
 
@@ -162,7 +181,7 @@ class glm_wrapper_functions_cluster:
         """
         
         correct_col_index = 122 #first reward predictor
-        correct_array = np.where(behav_matrix[:, correct_col_index] > 0) #look at reward predictor greater than 0
+        correct_array = np.where(behav_matrix[:, correct_col_index] > 0)[0] #look at reward predictor greater than 0
         correct_trials = []
         for i in range(len(trial_starts)):
             start = trial_starts[i]
